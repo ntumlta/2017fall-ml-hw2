@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<link rel="shortcut icon" href="favicon.ico">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="highlight.css">
+
+<meta name="author" content="sunprinceS" >
+<meta property="og:image" content="joy.png"/>
+<title>Machine Learning (2017, Spring)</title>
+
+<xmp theme="cerulean" style="display:none;">
+# Problem 5: Analyze the Model by Visualizing Filters
+
+Problem Description: 
+
+* use **Gradient Ascent** method mentioned in class to find the image that activates the selected filter the most and plot them (start from white noise).
+
+* Feed an image in your validation set to the model, and plot the output of that filter
+
+* Describe what you observed, and explain it
+
+Hint:
+
+* you can use other model with poor performance to see what is the difference
+
+* you can also try to find which image will activate the specific class the most
+
+* you can start from natural image (not white noise), and try to create the <a href="https://arxiv.org/pdf/1412.6572.pdf" target="_blank">**adversial image**</a>
+
+## Lecture
+<img src="lec.png" alt="Drawing" style="width: 1000px;"/>
+## 範例
+* **[Note] 請不要直接使用助教的圖來當成作業交上來**
+* **[Note] 請不要使用這張範例圖**
+
+<img src="17.png" alt="Drawing" style="width: 200px;"/>
+
+* **[Note] colormap 請不要使用 Purples**
+
+<img src="http://i.imgur.com/HdQ9oQU.png" alt="Drawing" style="width: 1300px;"/>
+<img src="http://i.imgur.com/xEvPeW8.png" alt="Drawing" style="width: 1300px;"/>
+
+## TA hour
+
+#### 畫圖
+以下的程式碼為matplotlib.pyplot的簡單示範，你也可以使用不同的呈現方式及函式庫
+
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">14</span><span class="p">,</span><span class="mi">8</span><span class="p">))</span> <span class="c1"># 大小可自行決定</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_filter</span><span class="p">):</span> <span class="c1"># 畫出每一個filter</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="n">nb_filter</span><span class="o">/</span><span class="mi">16</span><span class="p">,</span><span class="mi">16</span><span class="p">,</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="c1"># 每16個小圖一行</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">image</span><span class="p">,</span><span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;BuGn&#39;</span><span class="p">)</span> <span class="c1"># image為某個filter的output或最能activate某個filter的input image</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xticks</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([]))</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">yticks</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([]))</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;whatever subfigure title you want&#39;</span><span class="p">)</span> <span class="c1"># 如果你想在子圖下加小標的話</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;Whatever title you want&#39;</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">img_path</span><span class="p">,</span><span class="s1">&#39;Whatever filename you want&#39;</span><span class="p">))</span> <span class="c1">#將圖片儲存至disk</span>
+</pre></div>
+
+#### 給定輸入圖片，取出特定層的輸出
+
+#### 利用梯度遞增法，找出最能激活特定filter的圖片(從白噪音開始)
+</xmp>
+</xmp> <script src="strapdown.js"></script> </html>
+<footer>
+  <center><a href="./index.html"><i class="fa fa-home"></i></a></center>
+  <center><i class="fa fa-github"></i></a> Posted by: <a href="https://github.com/sunprinceS/" target="_blank">sunprinceS</a> </center>
+  <center><i class="fa fa-envelope"></i> Contact information: <a href="mailto:"> ntu.mlta@gmail.com </a>.</center>
+  <center><i class="fa fa-mortar-board"></i> Course information: <a href="http://speech.ee.ntu.edu.tw/~tlkagk/courses_ML17.html", target="_blank">Machine Learning (2017, Spring) @ National Taiwan University</a>.</center>
+</footer>
+</html>
