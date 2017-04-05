@@ -8,16 +8,120 @@
 <title>Machine Learning (2017, Spring)</title>
 
 <xmp theme="cerulean" style="display:none;">
-# Problem 5: Observe the output of filters in CNN
-
-Problem Description: 
-
-* choose the filters in certain layer, and use gradient ascent method to find the image activating the filter the most
-* feed an image to the network, and plot the output of each filter in certain layer
-
-以下會以 **Keras** 為使用的套件來做介紹 (並以tensorflow作為backend)
-
 <i class="fa fa-diamond"></i> Keywords: `keras.backend`, `gradients`
+
+#### 給定輸入圖片，取出特定層的輸出
+
+
+<div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">keras.models</span> <span class="kn">import</span> <span class="n">load\_model</span>
+<span class="kn">from</span> <span class="nn">keras</span> <span class="kn">import</span> <span class="n">backend</span> <span class="k">as</span> <span class="n">K</span>
+<span class="kn">from</span> <span class="nn">utils</span> <span class="kn">import</span> <span class="o">\*</span>
+
+<span class="n">base\_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="vm">\_\_file\_\_</span><span class="p">)))</span>
+<span class="n">exp\_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base\_dir</span><span class="p">,</span><span class="s1">&#39;exp&#39;</span><span class="p">)</span>
+<span class="n">vis\_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base\_dir</span><span class="p">,</span><span class="s1">&#39;image&#39;</span><span class="p">,</span><span class="s1">&#39;vis\_layer&#39;</span><span class="p">)</span>
+<span class="n">filter\_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base\_dir</span><span class="p">,</span><span class="s1">&#39;image&#39;</span><span class="p">,</span><span class="s1">&#39;vis\_filter&#39;</span><span class="p">)</span>
+
+<span class="n">nb\_class</span> <span class="o">=</span> <span class="mi">7</span>
+<span class="n">LR\_RATE</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="mf">1e-2</span>
+<span class="n">NUM\_STEPS</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">RECORD\_FREQ</span> <span class="o">=</span> <span class="mi">10</span>
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="n">emotion\_classifier</span> <span class="o">=</span> <span class="n">load\_model</span><span class="p">(</span><span class="n">model\_path</span><span class="p">)</span>
+    <span class="n">layer\_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([</span><span class="n">layer</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">layer</span><span class="p">]</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">emotion\_classifier</span><span class="o">.</span><span class="n">layers</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+
+    <span class="n">input\_img</span> <span class="o">=</span> <span class="n">emotion\_classifier</span><span class="o">.</span><span class="n">input</span>
+    <span class="n">collect\_layers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="n">collect\_layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">K</span><span class="o">.</span><span class="n">function</span><span class="p">([</span><span class="n">input\_img</span><span class="p">,</span><span class="n">K</span><span class="o">.</span><span class="n">learning\_phase</span><span class="p">()],[</span><span class="n">layer\_dict</span><span class="p">[</span><span class="s1">&#39;visLayer&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">output</span><span class="p">]))</span>
+
+    <span class="n">dev\_feat</span><span class="p">,</span><span class="n">dev\_label</span><span class="p">,</span><span class="n">dev\_num</span> <span class="o">=</span> <span class="n">read\_dataset</span><span class="p">(</span><span class="s1">&#39;valid&#39;</span><span class="p">)</span>
+    <span class="n">choose\_id</span> <span class="o">=</span> <span class="mi">17</span>
+    <span class="n">photo</span> <span class="o">=</span> <span class="n">dev\_feat</span><span class="p">[</span><span class="n">choose</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">cnt</span><span class="p">,</span> <span class="n">fn</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">collect\_layers</span><span class="p">):</span>
+        <span class="n">im</span> <span class="o">=</span> <span class="n">fn</span><span class="p">([</span><span class="n">photo</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">48</span><span class="p">,</span><span class="mi">48</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span><span class="mi">0</span><span class="p">])</span> <span class="c1">#get the output of that layer</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">14</span><span class="p">,</span><span class="mi">8</span><span class="p">))</span>
+        <span class="n">nb\_filter</span> <span class="o">=</span> <span class="n">im</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb\_filter</span><span class="p">):</span>
+            <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add\_subplot</span><span class="p">(</span><span class="n">nb\_filter</span><span class="o">/</span><span class="mi">16</span><span class="p">,</span><span class="mi">16</span><span class="p">,</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">im</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">,:,:,</span><span class="n">i</span><span class="p">],</span><span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;BuGn&#39;</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">xticks</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([]))</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">yticks</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([]))</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">tight\_layout</span><span class="p">()</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;Output of layer{} (Given image{})&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cnt</span><span class="p">,</span><span class="n">choose\_id</span><span class="p">))</span>
+        <span class="n">img\_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">vis\_dir</span><span class="p">,</span><span class="n">store\_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">img\_path</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">img\_path</span><span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">img\_path</span><span class="p">,</span><span class="s1">&#39;layer{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cnt</span><span class="p">)))</span>
+</pre></div>
+
+#### 利用梯度遞增法，找出最能激活特定filter的圖片(從白噪音開始)
+<div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">keras.models</span> <span class="kn">import</span> <span class="n">load\_model</span>
+<span class="kn">from</span> <span class="nn">keras</span> <span class="kn">import</span> <span class="n">backend</span> <span class="k">as</span> <span class="n">K</span>
+
+<span class="kn">from</span> <span class="nn">utils</span> <span class="kn">import</span> <span class="o">\*</span>
+
+<span class="n">base\_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="vm">\_\_file\_\_</span><span class="p">)))</span>
+<span class="n">exp\_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base\_dir</span><span class="p">,</span><span class="s1">&#39;exp&#39;</span><span class="p">)</span>
+<span class="n">vis\_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base\_dir</span><span class="p">,</span><span class="s1">&#39;image&#39;</span><span class="p">,</span><span class="s1">&#39;vis\_layer&#39;</span><span class="p">)</span>
+<span class="n">filter\_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base\_dir</span><span class="p">,</span><span class="s1">&#39;image&#39;</span><span class="p">,</span><span class="s1">&#39;vis\_filter&#39;</span><span class="p">)</span>
+
+<span class="n">nb\_class</span> <span class="o">=</span> <span class="mi">7</span>
+<span class="n">LR\_RATE</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">\*</span> <span class="mf">1e-2</span>
+<span class="n">NUM\_STEPS</span> <span class="o">=</span> <span class="mi">200</span>
+<span class="n">RECORD\_FREQ</span> <span class="o">=</span> <span class="mi">10</span>
+
+<span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="c1"># utility function to normalize a tensor by its L2 norm</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">/</span> <span class="p">(</span><span class="n">K</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">K</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">K</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">x</span><span class="p">)))</span> <span class="o">+</span> <span class="mf">1e-5</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="n">emotion\_classifier</span> <span class="o">=</span> <span class="n">load\_model</span><span class="p">(</span><span class="n">model\_path</span><span class="p">)</span>
+    <span class="n">layer\_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([</span><span class="n">layer</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">layer</span><span class="p">]</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">emotion\_classifier</span><span class="o">.</span><span class="n">layers</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+    <span class="n">input\_img</span> <span class="o">=</span> <span class="n">emotion\_classifier</span><span class="o">.</span><span class="n">input</span>
+
+    <span class="n">name\_ls</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;zeropadding2d\_1&#39;</span><span class="p">]</span>
+    <span class="n">collect\_layers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="n">collect\_layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">layer\_dict</span><span class="p">[</span><span class="n">name\_ls</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">cnt</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">collect\_layers</span><span class="p">):</span>
+        <span class="n">filter\_imgs</span> <span class="o">=</span> <span class="p">[[]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NUM\_STEPS</span><span class="o">//</span><span class="n">RECORD\_FREQ</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">filter\_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb\_filter</span><span class="p">):</span>
+            <span class="n">input\_img\_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">48</span><span class="p">,</span> <span class="mi">48</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">target</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">c</span><span class="p">[:,:,:,</span><span class="n">filter\_idx</span><span class="p">])</span>
+            <span class="n">grads</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">(</span><span class="n">K</span><span class="o">.</span><span class="n">gradients</span><span class="p">(</span><span class="n">target</span><span class="p">,</span><span class="n">input\_img</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">iterate</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">function</span><span class="p">([</span><span class="n">input\_img</span><span class="p">],[</span><span class="n">target</span><span class="p">,</span><span class="n">grads</span><span class="p">])</span>
+            
+            <span class="k">for</span> <span class="n">it</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NUM\_STEPS</span><span class="p">):</span>
+                <span class="n">target\_val</span><span class="p">,</span> <span class="n">grads\_val</span> <span class="o">=</span> <span class="n">iterate</span><span class="p">([</span><span class="n">input\_img\_data</span><span class="p">])</span>
+                <span class="n">input\_img\_data</span> <span class="o">+=</span> <span class="n">grads\_val</span><span class="o">\*</span><span class="n">LR\_RATE</span>
+                <span class="k">if</span> <span class="n">it</span> <span class="o">%</span> <span class="n">RECORD\_FREQ</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">tmp</span> <span class="o">=</span> <span class="n">input\_img\_data</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">48</span><span class="p">,</span><span class="mi">48</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+                    <span class="n">filter\_imgs</span><span class="p">[</span><span class="n">it</span><span class="o">//</span><span class="n">RECORD\_FREQ</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">deprocess\_image</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">48</span><span class="p">,</span><span class="mi">48</span><span class="p">),</span><span class="n">target\_val</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">it</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NUM\_STEPS</span><span class="o">//</span><span class="n">RECORD\_FREQ</span><span class="p">):</span>
+            <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">14</span><span class="p">,</span><span class="mi">8</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb\_filter</span><span class="p">):</span>
+                <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add\_subplot</span><span class="p">(</span><span class="n">nb\_filter</span><span class="o">/</span><span class="mi">16</span><span class="p">,</span><span class="mi">16</span><span class="p">,</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">filter\_imgs</span><span class="p">[</span><span class="n">it</span><span class="p">][</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span><span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;BuGn&#39;</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">xticks</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([]))</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">yticks</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([]))</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;{:.3f}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">filter\_imgs</span><span class="p">[</span><span class="n">it</span><span class="p">][</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]))</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">tight\_layout</span><span class="p">()</span>
+            <span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;Filters of layer {} (# Ascent Epoch {} )&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name\_ls</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">it</span><span class="o">\*</span><span class="n">RECORD\_FREQ</span><span class="p">))</span>
+            <span class="n">img\_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">filter\_dir</span><span class="p">,</span><span class="s1">&#39;{}-{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">store\_path</span><span class="p">,</span><span class="n">name\_ls</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">img\_path</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">img\_path</span><span class="p">)</span>
+            <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">img\_path</span><span class="p">,</span><span class="s1">&#39;e{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">it</span><span class="o">\*</span><span class="n">RECORD\_FREQ</span><span class="p">)))</span>
+</pre></div>
 
 
 </xmp>
