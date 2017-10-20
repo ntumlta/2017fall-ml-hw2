@@ -229,8 +229,8 @@
             cross_entropy = <span class="hljs-number">-1</span> * (np.dot(np.squeeze(Y), np.log(y)) + np.dot((<span class="hljs-number">1</span> - np.squeeze(Y)), np.log(<span class="hljs-number">1</span> - y)))
             total_loss += cross_entropy
 
-            w_grad = np.sum(<span class="hljs-number">-1</span> * X * (np.squeeze(Y) - y).reshape((batch_size,<span class="hljs-number">1</span>)), axis=<span class="hljs-number">0</span>)
-            b_grad = np.sum(<span class="hljs-number">-1</span> * (np.squeeze(Y) - y))
+            w_grad = np.mean(<span class="hljs-number">-1</span> * X * (np.squeeze(Y) - y).reshape((batch_size,<span class="hljs-number">1</span>)), axis=<span class="hljs-number">0</span>)
+            b_grad = np.mean(<span class="hljs-number">-1</span> * (np.squeeze(Y) - y))
 
             <span class="hljs-comment"># SGD updating parameters</span>
             w = w - l_rate * w_grad
